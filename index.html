@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>農食小站收銀</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="農食小站">
+<meta name="theme-color" content="#f6f3ec">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f6f3ec; --panel:#fffdf8; --ink:#2b2a26; --mute:#7a766c; --line:#e4dfd3;
+  --green:#3f6b3a; --green-soft:#e6eedf; --red:#b0412e; --amber:#b7791f;
+  --c-她取蜜:#c98a12; --c-菜轎:#3f6b3a; --c-小甜心:#a0527a; --c-枻心福田:#6b6a3a;
+  --c-芭樂汁:#c4505e; --c-鮮果秤重:#5b7f8f; --c-鮮果包裝:#4f8a6b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webkit-user-select:none;user-select:none}
+input{font:inherit}
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh;height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.05em}
+.sync{margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--green-soft);font-size:15px}
+.sync .dot{width:10px;height:10px;border-radius:50%;background:var(--green)}
+.sync.wait{background:#fbefd9}.sync.wait .dot{background:var(--amber)}
+.sync.err{background:#f6dcd6}.sync.err .dot{background:var(--red)}
+.hbtn{padding:10px 16px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:16px}
+main{display:grid;grid-template-columns:1fr 360px;min-height:0}
+.left{display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.tab{flex:none;padding:12px 18px;border-radius:12px;font-size:17px;background:var(--panel);border:2px solid transparent}
+.tab.on{border-color:var(--gc);color:var(--gc);font-weight:700}
+.grid{flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-content:start}
+.item{min-height:104px;border-radius:16px;background:var(--panel);border:1px solid var(--line);border-top:6px solid var(--gc);
+  padding:12px;display:flex;flex-direction:column;justify-content:space-between;text-align:left}
+.item:active{transform:scale(.97);background:var(--green-soft)}
+.item .nm{font-size:19px;font-weight:600;line-height:1.3}
+.item .pr{font-size:22px;font-weight:700;color:var(--gc)}
+.item .pr.w{font-size:16px}
+.right{display:flex;flex-direction:column;border-left:1px solid var(--line);background:var(--panel);min-height:0}
+.cart{flex:1;overflow-y:auto;padding:8px 16px}
+.empty{color:var(--mute);text-align:center;margin-top:40px;font-size:16px}
+.line{display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.line .nm{font-size:17px;font-weight:600}
+.line .sub{font-size:17px;font-weight:700;text-align:right}
+.line .ctl{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mute);font-size:15px}
+.qb{width:44px;height:40px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:22px;line-height:1}
+.qty{min-width:28px;text-align:center;font-size:18px;color:var(--ink);font-weight:600}
+.total{padding:14px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.total b{font-size:34px}
+.pays{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 12px}
+.pay{padding:18px 4px;border-radius:14px;background:var(--green);color:#fff;font-size:18px;font-weight:700}
+.pay:disabled{opacity:.35}
+.foot{display:flex;gap:8px;padding:0 16px 16px}
+.foot .hbtn{flex:1}
+.ov{position:fixed;inset:0;background:rgba(30,28,22,.45);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+.ov.show{display:flex}
+.modal{background:var(--panel);border-radius:20px;width:min(520px,100%);max-height:92vh;overflow:auto;padding:22px}
+.modal h2{margin:0 0 6px;font-size:22px}
+.modal .hint{color:var(--mute);font-size:15px;margin:0 0 14px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.field{border:2px solid var(--line);border-radius:14px;padding:10px 14px;text-align:left}
+.field.on{border-color:var(--green)}
+.field small{display:block;color:var(--mute);font-size:14px}
+.field span{font-size:30px;font-weight:700}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{padding:16px 0;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:24px}
+.quick{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.quick button{flex:1;padding:12px 0;border-radius:12px;background:var(--green-soft);font-size:17px}
+.row2{display:flex;gap:10px;margin-top:14px}
+.row2 button{flex:1;padding:16px;border-radius:14px;font-size:18px;font-weight:700}
+.ok{background:var(--green);color:#fff}.no{background:var(--bg);border:1px solid var(--line)}.danger{background:var(--red);color:#fff}
+.change{font-size:20px;margin:6px 0 12px}.change b{font-size:30px;color:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:16px}
+td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+td.n,th.n{text-align:right}
+.ord{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:15px}
+.ord.void{opacity:.45;text-decoration:line-through}
+.ord .top{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:16px}
+.ord button{padding:8px 12px;border-radius:10px;background:#f6dcd6;color:var(--red);font-size:15px;text-decoration:none}
+label.f{display:block;margin:12px 0 4px;color:var(--mute);font-size:15px}
+input.t{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:17px;background:#fff}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 22px;border-radius:14px;
+  font-size:17px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+@media (max-width:820px){main{grid-template-columns:1fr 300px}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+@media (orientation:portrait) and (max-width:900px){
+  main{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .right{border-left:0;border-top:1px solid var(--line);max-height:46vh}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>農食小站</h1>
+    <button class="sync" id="sync"><span class="dot"></span><span id="syncText">尚未設定</span></button>
+    <button class="hbtn" id="btnToday">今日紀錄</button>
+    <button class="hbtn" id="btnSet">⚙ 設定</button>
+  </header>
+  <main>
+    <section class="left">
+      <nav class="tabs" id="tabs"></nav>
+      <div class="grid" id="grid"></div>
+    </section>
+    <aside class="right">
+      <div class="cart" id="cart"></div>
+      <div class="total"><span>合計</span><b id="total">$0</b></div>
+      <div class="pays">
+        <button class="pay" data-pay="現金">現金</button>
+        <button class="pay" data-pay="LINE Pay">LINE Pay</button>
+        <button class="pay" data-pay="台灣Pay">台灣Pay</button>
+      </div>
+      <div class="foot">
+        <button class="hbtn" id="btnClear">清空</button>
+        <button class="hbtn" id="btnUndo">刪除上一筆</button>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ── 預設菜單：還沒連上試算表前先用這份，連上後以試算表「品項設定」為準 ── */
+const DEFAULT_MENU = [
+  ['她取蜜','蜜茶','她取蜜','自營',60],['她取蜜','蜂蜜（大）','她取蜜','自營',700],['她取蜜','蜂蜜（中）','她取蜜','自營',480],
+  ['她取蜜','蜂蜜（小）','她取蜜','自營',150],['她取蜜','棒棒糖','她取蜜','自營',50],['她取蜜','鬆餅','她取蜜','自營',70],
+  ['菜轎','生菜','菜轎','自營',150],['菜轎','生菜沙拉','菜轎','自營',65],['菜轎','黃瓜檸檬水','菜轎','自營',60],
+  ['菜轎','黃瓜檸檬水 續杯','菜轎','自營',40],['菜轎','涼拌黃瓜','菜轎','自營',40],['菜轎','飲品加愛玉','菜轎','自營',10],
+  ['小甜心','小甜心 2入/組','小甜心','寄售',250,0,.3],['小甜心','小甜心 3入/組','小甜心','寄售',380,0,.3],
+  ...[['無糖米香',80],['麥芽甜米香',150],['野薑花甜米香',180],['米糠粉',150],['米糠皂',250],['米餅乾禮盒',250],
+      ['糙米粉',180],['蔬菜煎餅粉',200],['黑（糯）米',120],['糙米麩',160]].map(([n,p])=>['枻心福田',n,'枻心福田','寄售',p,0,.2]),
+  ['芭樂汁','紅心芭樂原汁','芭樂生產者','三方均分',100,15],['芭樂汁','紅心芭樂現喝','芭樂生產者','三方均分',80,15],
+  ['鮮果秤重','酪梨','鮮果秤斤','自營',null],['鮮果秤重','紅心芭樂','鮮果秤斤','自營',null],
+  ['鮮果包裝','黃檸檬','菜轎','自營',50],['鮮果包裝','秋葵','菜轎','自營',45],['鮮果包裝','小黃瓜','菜轎','自營',50],['鮮果包裝','櫛瓜','菜轎','自營',40]
+].map(([group,name,owner,mode,price,cost,rate])=>({group,name,owner,mode,price,cost:cost||0,rate:rate||0}));
+
+/* ── 本機儲存（斷網時資料都先存在平板裡） ── */
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem('nsz.'+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('nsz.'+k,JSON.stringify(v)); return true; }catch(e){ toast('⚠ 平板儲存空間異常，請截圖告知'); return false; } }
+};
+const BACKEND = 'https://script.google.com/macros/s/AKfycbxiuPdJsNDuLqdtp0cVBHh1y8TpSZWl-HDhx7Oi6gXU2rPlPfD4yJrYTw390Bbge7nHhw/exec';
+let cfg   = store.get('cfg',{url:BACKEND,key:'',device:'iPad'});
+let menu  = store.get('menu',DEFAULT_MENU);
+let queue = store.get('queue',[]);   // 還沒上傳的操作
+let log   = store.get('log',[]);     // 本機訂單紀錄（給「今日紀錄」與刪除用）
+let cart  = [];
+let tab   = store.get('tab',null);
+let syncState = {busy:false,err:'',last:store.get('lastSync',null)};
+
+const $ = s=>document.querySelector(s);
+const money = n=>'$'+(Math.round(n*100)/100).toLocaleString('zh-TW');
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const groups = ()=>[...new Set(menu.map(m=>m.group))];
+const gcolor = g=>getComputedStyle(document.documentElement).getPropertyValue('--c-'+g).trim()||'#3f6b3a';
+const pad2 = n=>String(n).padStart(2,'0');
+const ymd = d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const hm = d=>pad2(d.getHours())+':'+pad2(d.getMinutes());
+const rid = ()=>Math.random().toString(36).slice(2,6);
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ── 品項畫面 ── */
+function renderTabs(){
+  const gs=groups(); if(!gs.includes(tab)) tab=gs[0];
+  $('#tabs').innerHTML=gs.map(g=>`<button class="tab ${g===tab?'on':''}" style="--gc:${gcolor(g)}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+  $('#grid').innerHTML=menu.map((m,i)=>m.group!==tab?'':
+    `<button class="item" style="--gc:${gcolor(m.group)}" data-i="${i}"><span class="nm">${esc(m.name)}</span>
+     <span class="pr ${m.price===null?'w':''}">${m.price===null?'秤重・輸入金額':money(m.price)}</span></button>`).join('');
+}
+$('#tabs').onclick=e=>{ const b=e.target.closest('.tab'); if(!b) return; tab=b.dataset.g; store.set('tab',tab); renderTabs(); };
+$('#grid').onclick=e=>{
+  const b=e.target.closest('.item'); if(!b) return;
+  const m=menu[+b.dataset.i];
+  if(m.price===null) return weighModal(m);
+  const ex=cart.find(c=>c.name===m.name&&c.price!==null);
+  if(ex) ex.qty++; else cart.push({...m,qty:1});
+  renderCart();
+};
+
+/* ── 購物車 ── */
+const lineAmount = c=>c.price===null?c.amount:c.price*c.qty;
+const cartTotal = ()=>cart.reduce((a,c)=>a+lineAmount(c),0);
+function renderCart(){
+  $('#cart').innerHTML=cart.length?cart.map((c,i)=>`<div class="line"><span class="nm">${esc(c.name)}</span><span class="sub">${money(lineAmount(c))}</span>
+    <div class="ctl">${c.price===null
+      ?`秤重${c.cost?'・成本 '+money(c.cost):''}<span style="flex:1"></span><button class="qb" data-del="${i}">✕</button>`
+      :`<button class="qb" data-dec="${i}">−</button><span class="qty">${c.qty}</span><button class="qb" data-inc="${i}">＋</button>
+        <span>× ${money(c.price)}</span><span style="flex:1"></span><button class="qb" data-del="${i}">✕</button>`}</div></div>`).join('')
+    :'<p class="empty">點左邊的品項加入</p>';
+  $('#total').textContent=money(cartTotal());
+  document.querySelectorAll('.pay').forEach(b=>b.disabled=!cart.length);
+}
+$('#cart').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.inc) cart[+b.dataset.inc].qty++;
+  if(b.dataset.dec){ const c=cart[+b.dataset.dec]; if(--c.qty<=0) cart.splice(+b.dataset.dec,1); }
+  if(b.dataset.del) cart.splice(+b.dataset.del,1);
+  renderCart();
+};
+$('#btnClear').onclick=()=>{ if(cart.length) confirmModal('清空購物車？','還沒結帳的品項會全部移除。','清空',()=>{cart=[];renderCart();},true); };
+
+/* ── 彈窗 ── */
+function openModal(html){ $('#modal').innerHTML=html; $('#ov').classList.add('show'); }
+function closeModal(){ $('#ov').classList.remove('show'); }
+$('#ov').onclick=e=>{ if(e.target.id==='ov') closeModal(); };
+function confirmModal(title,hint,okText,fn,danger){
+  openModal(`<h2>${title}</h2><p class="hint">${hint}</p><div class="row2"><button class="no" id="mNo">取消</button>
+    <button class="${danger?'danger':'ok'}" id="mOk">${okText}</button></div>`);
+  $('#mNo').onclick=closeModal; $('#mOk').onclick=()=>{ closeModal(); fn(); };
+}
+
+/* 數字鍵盤：fields = [{key,label}] */
+function numpad(title,hint,fields,extraTop,onOk,okText){
+  const val={}; fields.forEach(f=>val[f.key]=''); let cur=fields[0].key;
+  openModal(`<h2>${title}</h2><p class="hint">${hint}</p>${extraTop||''}
+    <div class="fields" style="grid-template-columns:repeat(${fields.length},1fr)">${fields.map(f=>
+      `<button class="field" data-f="${f.key}"><small>${f.label}</small><span id="v_${f.key}">0</span></button>`).join('')}</div>
+    <div id="npExtra"></div>
+    <div class="pad">${['1','2','3','4','5','6','7','8','9','00','0','⌫'].map(k=>`<button data-k="${k}">${k}</button>`).join('')}</div>
+    <div class="row2"><button class="no" id="mNo">取消</button><button class="ok" id="mOk">${okText||'確定'}</button></div>`);
+  const paint=()=>{ fields.forEach(f=>{ $('#v_'+f.key).textContent=val[f.key]||'0';
+    document.querySelector(`.field[data-f="${f.key}"]`).classList.toggle('on',f.key===cur); }); numpad.onChange&&numpad.onChange(val); };
+  $('#modal').querySelectorAll('.field').forEach(b=>b.onclick=()=>{cur=b.dataset.f;paint();});
+  $('#modal').querySelector('.pad').onclick=e=>{ const k=e.target.dataset.k; if(!k) return;
+    if(k==='⌫') val[cur]=val[cur].slice(0,-1); else if(val[cur].length<7) val[cur]=(val[cur]+k).replace(/^0+(?=\d)/,'');
+    paint(); };
+  numpad.set=(k,v)=>{ val[k]=String(v); paint(); };
+  $('#mNo').onclick=()=>{ numpad.onChange=null; closeModal(); };
+  $('#mOk').onclick=()=>{ if(onOk(val)!==false){ numpad.onChange=null; closeModal(); } };
+  paint();
+}
+
+function weighModal(m){
+  numpad(esc(m.name)+'（秤重）','秤好之後輸入這次的金額；成本有的話也可以順便填，沒有就留 0。',
+    [{key:'amount',label:'金額'},{key:'cost',label:'成本（可不填）'}],'',
+    v=>{ const a=+v.amount; if(!a){ toast('請輸入金額'); return false; }
+      cart.push({...m,qty:1,amount:a,cost:+v.cost||0}); renderCart(); },'加入');
+}
+
+/* ── 結帳 ── */
+document.querySelectorAll('.pay').forEach(b=>b.onclick=()=>{
+  if(!cart.length) return;
+  const pay=b.dataset.pay, total=cartTotal();
+  if(pay==='現金'){
+    const quick=[...new Set([total,Math.ceil(total/100)*100,Math.ceil(total/500)*500,Math.ceil(total/1000)*1000])];
+    numpad('現金收款 '+money(total),'輸入客人給的錢，會幫你算找零（直接按「完成結帳」也可以）。',[{key:'got',label:'收到'}],
+      `<div class="quick">${quick.map(q=>`<button data-q="${q}">${q===total?'剛好':money(q)}</button>`).join('')}</div>`,
+      ()=>{ checkout(pay); },'完成結帳');
+    $('#npExtra').innerHTML='<p class="change">找零 <b id="chg">—</b></p>';
+    numpad.onChange=v=>{ const g=+v.got; $('#chg').textContent=g?(g>=total?money(g-total):'還差 '+money(total-g)):'—'; };
+    $('#modal').querySelector('.quick').onclick=e=>{ const q=e.target.dataset.q; if(q) numpad.set('got',q); };
+  } else {
+    confirmModal(`確認已收到 ${pay}？`,`金額 ${money(total)}`,'完成結帳',()=>checkout(pay));
+  }
+});
+
+function checkout(pay){
+  const now=new Date(), d=ymd(now).replace(/-/g,'').slice(4);
+  const orderId=`${cfg.device||'平板'}-${d}-${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}-${rid()}`;
+  const lines=cart.map((c,i)=>({lineId:orderId+'-'+(i+1),group:c.group,name:c.name,owner:c.owner,mode:c.mode,
+    price:c.price,qty:c.qty,amount:lineAmount(c),cost:c.price===null?(c.cost||0):(c.cost||0)*c.qty,rate:c.rate||0}));
+  const op={op:'sale',opId:orderId,orderId,ts:now.getTime(),device:cfg.device,pay,lines};
+  log.push({...op,total:cartTotal(),void:false});
+  if(log.length>3000) log=log.slice(-3000);
+  queue.push(op);
+  store.set('log',log); store.set('queue',queue);
+  cart=[]; renderCart(); toast('✔ 已記錄 '+money(op.lines.reduce((a,l)=>a+l.amount,0))+'（'+pay+'）');
+  sync();
+}
+
+function voidOrder(o){
+  o.void=true;
+  queue.push({op:'void',opId:'void-'+o.orderId,orderId:o.orderId,ts:Date.now()});
+  store.set('log',log); store.set('queue',queue);
+  toast('已刪除這筆，試算表會保留刪除紀錄'); sync();
+}
+function orderSummary(o){ return o.lines.map(l=>esc(l.name)+(l.price===null?'':' ×'+l.qty)).join('、'); }
+$('#btnUndo').onclick=()=>{
+  const o=[...log].reverse().find(x=>!x.void);
+  if(!o) return toast('目前沒有可以刪除的紀錄');
+  confirmModal('刪除上一筆？',`${hm(new Date(o.ts))}｜${o.pay}｜<b>${money(o.total)}</b><br>${orderSummary(o)}`,'刪除這筆',()=>voidOrder(o),true);
+};
+
+/* ── 今日紀錄（只統計這台平板） ── */
+$('#btnToday').onclick=()=>{
+  const today=ymd(new Date()), list=log.filter(o=>ymd(new Date(o.ts))===today);
+  const ok=list.filter(o=>!o.void), byPay={}, byOwner={};
+  ok.forEach(o=>{ byPay[o.pay]=(byPay[o.pay]||0)+o.total; o.lines.forEach(l=>byOwner[l.owner]=(byOwner[l.owner]||0)+l.amount); });
+  const sum=ok.reduce((a,o)=>a+o.total,0);
+  openModal(`<h2>今日紀錄 ${today}</h2><p class="hint">這台平板的紀錄（${ok.length} 筆）。正式分帳請看試算表「分帳查詢」。</p>
+    <table><tr><th>付款方式</th><th class="n">金額</th></tr>
+      ${['現金','LINE Pay','台灣Pay'].map(p=>`<tr><td>${p}</td><td class="n">${money(byPay[p]||0)}</td></tr>`).join('')}
+      <tr><th>合計</th><th class="n">${money(sum)}</th></tr></table>
+    <p class="hint" style="margin-top:14px">各品牌賣出金額（還沒扣分潤）</p>
+    <table>${Object.keys(byOwner).map(k=>`<tr><td>${esc(k)}</td><td class="n">${money(byOwner[k])}</td></tr>`).join('')||'<tr><td>—</td></tr>'}</table>
+    <p class="hint" style="margin-top:14px">每筆明細（新的在上面）</p>
+    ${list.slice().reverse().map(o=>`<div class="ord ${o.void?'void':''}"><div class="top"><span>${hm(new Date(o.ts))}・${o.pay}・${money(o.total)}</span>
+      ${o.void?'<span>已刪除</span>':`<button data-v="${esc(o.orderId)}">刪除</button>`}</div>${orderSummary(o)}</div>`).join('')||'<p class="empty">今天還沒有交易</p>'}
+    <div class="row2"><button class="no" id="mNo">關閉</button></div>`);
+  $('#mNo').onclick=closeModal;
+  $('#modal').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
+    const o=log.find(x=>x.orderId===b.dataset.v);
+    confirmModal('刪除這筆？',`${hm(new Date(o.ts))}｜${o.pay}｜<b>${money(o.total)}</b><br>${orderSummary(o)}`,'刪除這筆',()=>voidOrder(o),true);
+  });
+};
+
+/* ── 設定 ── */
+$('#btnSet').onclick=()=>{
+  openModal(`<h2>設定</h2><p class="hint">這些資料只存在這台平板裡。</p>
+    <label class="f">試算表連線網址（Apps Script 網址，結尾是 /exec）</label><input class="t" id="sUrl" value="${esc(cfg.url)}" autocomplete="off">
+    <label class="f">連線密碼（6 位數字，忘記可在試算表上方選單「收銀系統 → 顯示連線密碼」查看）</label><input class="t" id="sKey" value="${esc(cfg.key)}" inputmode="numeric">
+    <label class="f">這台平板的名字（多台平板一起用時分得出來）</label><input class="t" id="sDev" value="${esc(cfg.device)}">
+    <p class="hint" style="margin-top:14px">菜單目前有 ${menu.length} 個品項${store.get('menuAt',null)?'，最後更新：'+store.get('menuAt'):'（預設菜單，尚未從試算表更新）'}<br>
+      待上傳：${queue.length} 筆${syncState.last?'｜最後同步：'+syncState.last:''}</p>
+    <div class="row2"><button class="no" id="mNo">關閉</button><button class="ok" id="mSave">儲存並更新菜單</button></div>`);
+  $('#mNo').onclick=closeModal;
+  $('#mSave').onclick=async()=>{
+    cfg={url:$('#sUrl').value.trim(),key:$('#sKey').value.trim(),device:$('#sDev').value.trim()||'平板'};
+    store.set('cfg',cfg); closeModal();
+    const ok=await loadMenu(true); if(ok) sync();
+  };
+};
+
+/* ── 連線 ── */
+async function call(method,params,body){
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),20000);
+  try{
+    const url=cfg.url+(params?'?'+new URLSearchParams(params):'');
+    const r=await fetch(url,{method,signal:ctl.signal,redirect:'follow',
+      ...(body?{headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}:{})});
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+async function loadMenu(loud){
+  if(!cfg.url) return false;
+  try{
+    const r=await call('GET',{action:'menu',key:cfg.key});
+    if(!r.ok) throw new Error(r.error);
+    if(r.items&&r.items.length){ menu=r.items; store.set('menu',menu); store.set('menuAt',new Date().toLocaleString('zh-TW')); renderTabs(); }
+    if(loud) toast('✔ 已連線，菜單已更新（'+menu.length+' 項）');
+    return true;
+  }catch(e){ if(loud) toast('連線失敗：'+(e.name==='AbortError'?'網路逾時':e.message)); return false; }
+}
+async function sync(){
+  if(syncState.busy||!cfg.url||!queue.length){ paintSync(); return; }
+  syncState.busy=true; paintSync();
+  try{
+    while(queue.length){
+      const batch=queue.slice(0,40);
+      const r=await call('POST',null,{key:cfg.key,ops:batch});
+      if(!r.ok) throw new Error(r.error||'未知錯誤');
+      const done=new Set(r.applied);
+      queue=queue.filter(o=>!done.has(o.opId)); store.set('queue',queue);
+      if(!done.size) throw new Error('伺服器沒有收下資料');
+    }
+    syncState.err=''; syncState.last=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}); store.set('lastSync',syncState.last);
+  }catch(e){ syncState.err=e.name==='AbortError'||e instanceof TypeError?'':e.message; }
+  syncState.busy=false; paintSync();
+}
+function paintSync(){
+  const el=$('#sync'), tx=$('#syncText');
+  el.className='sync';
+  if(!cfg.url||!cfg.key){ el.classList.add('err'); tx.textContent='請到「設定」輸入連線密碼'; return; }
+  if(syncState.err){ el.classList.add('err'); tx.textContent='上傳失敗：'+syncState.err; return; }
+  if(syncState.busy){ el.classList.add('wait'); tx.textContent='上傳中…'; return; }
+  if(queue.length){ el.classList.add('wait'); tx.textContent='離線中・待上傳 '+queue.length+' 筆'; return; }
+  tx.textContent='已全部上傳'+(syncState.last?'（'+syncState.last+'）':'');
+}
+$('#sync').onclick=()=>{ syncState.err=''; sync(); if(!queue.length) toast(cfg.url?'沒有待上傳的資料':'請先到「設定」填連線資料'); };
+window.addEventListener('online',sync);
+setInterval(sync,30000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) sync(); });
+
+if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderTabs(); renderCart(); paintSync(); loadMenu(false).then(sync);
+</script>
+</body>
+</html>
