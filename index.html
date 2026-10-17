@@ -141,7 +141,12 @@ const DEFAULT_MENU = [
       ['糙米粉',180],['蔬菜煎餅粉',200],['黑（糯）米',120],['糙米麩',160]].map(([n,p])=>['枻心福田',n,'枻心福田','寄售',p,0,.2]),
   ['芭樂汁','紅心芭樂原汁','芭樂生產者','三方均分',100,15],['芭樂汁','紅心芭樂現喝','芭樂生產者','三方均分',80,15],
   ['鮮果秤重','酪梨','鮮果秤斤','自營',null],['鮮果秤重','紅心芭樂','鮮果秤斤','自營',null],
-  ['鮮果包裝','黃檸檬','菜轎','自營',50],['鮮果包裝','秋葵','菜轎','自營',45],['鮮果包裝','小黃瓜','菜轎','自營',50],['鮮果包裝','櫛瓜','菜轎','自營',40]
+  ['鮮果包裝','黃檸檬','鮮果包裝','寄售',20,0,1],['鮮果包裝','秋葵','鮮果包裝','寄售',45,0,1],['鮮果包裝','小黃瓜','鮮果包裝','寄售',50,0,1],['鮮果包裝','櫛瓜','鮮果包裝','寄售',40,0,1],
+  ['她取蜜','護唇膏','她取蜜','自營',150],['她取蜜','折扣5元','她取蜜','自營',-5],['菜轎','折扣5元','菜轎','自營',-5],
+  ['她取蜜','折扣10元','她取蜜','自營',-10],['她取蜜','大瓶蜂蜜9折','她取蜜','自營',-70],['她取蜜','中瓶蜂蜜9折','她取蜜','自營',-48],
+  ['她取蜜','150元蜂蜜產品9折','她取蜜','自營',-15],['善糧不二','蔬菜風味鹽','善糧不二','寄售',350,300,0.142857],
+  ['鮮果秤重','帝王芭樂','鮮果秤斤','自營',null],['悠綠客','檸檬爆米花','悠綠客','寄售',120,0,.5],
+  ['悠綠客','檸檬冷凍片','悠綠客','寄售',150,0,0.466667],['悠綠客','冷凍檸檬汁','悠綠客','寄售',200,0,.5]
 ].map(([group,name,owner,mode,price,cost,rate])=>({group,name,owner,mode,price,cost:cost||0,rate:rate||0}));
 
 /* ── 本機儲存（斷網時資料都先存在平板裡） ── */
@@ -153,7 +158,14 @@ const BACKEND = 'https://script.google.com/macros/s/AKfycbxiuPdJsNDuLqdtp0cVBHh1
 let cfg   = store.get('cfg',{url:BACKEND,key:'',device:'iPad'});
 let menu  = store.get('menu',DEFAULT_MENU);
 let queue = store.get('queue',[]);   // 還沒上傳的操作
-let log   = store.get('log',[]);     // 本機訂單紀錄（給「今日紀錄」與刪除用）
+let log   = store.get('log',[]);     // 本機訂單紀錄（給「今日紀錄」與刪除用），只留最近 5 天
+const LOG_DAYS = 5;
+function pruneLog(){
+  const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-(LOG_DAYS-1));   // 今天＋前 4 天
+  const keep=log.filter(o=>o.ts>=d.getTime());
+  if(keep.length!==log.length){ log=keep; store.set('log',log); }
+}
+pruneLog();
 let cart  = [];
 let tab   = store.get('tab',null);
 let syncState = {busy:false,err:'',last:store.get('lastSync',null)};
@@ -272,7 +284,7 @@ function checkout(pay){
     price:c.price,qty:c.qty,amount:lineAmount(c),cost:c.price===null?(c.cost||0):(c.cost||0)*c.qty,rate:c.rate||0}));
   const op={op:'sale',opId:orderId,orderId,ts:now.getTime(),device:cfg.device,pay,lines};
   log.push({...op,total:cartTotal(),void:false});
-  if(log.length>3000) log=log.slice(-3000);
+  pruneLog();
   queue.push(op);
   store.set('log',log); store.set('queue',queue);
   cart=[]; renderCart(); toast('✔ 已記錄 '+money(op.lines.reduce((a,l)=>a+l.amount,0))+'（'+pay+'）');

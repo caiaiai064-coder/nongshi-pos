@@ -1,5 +1,5 @@
 // 讓收銀 App 沒網路也打得開：第一次開啟時把頁面存進平板，之後優先用存好的版本
-const CACHE = 'nsz-v1';
+const CACHE = 'nsz-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
